@@ -27,23 +27,13 @@ def resolve_hidden_layers(config):
     return list(hidden_size)
 
 
-def main():
-    args = parse_arguments()
-    X_train, y_train, X_val, y_val, X_test, y_test = load_and_preprocess_data(args.dataset)
-
-    if args.split == "train":
-        X, y = X_train, y_train
-    elif args.split == "val":
-        X, y = X_val, y_val
-    else:
-        X, y = X_test, y_test
-
-    with open(args.config_path, "r") as f:
+def load_model(model_path, config_path):
+    """Load a trained NeuralNetwork from saved weights and config."""
+    with open(config_path, "r") as f:
         config = json.load(f)
 
     hidden_layers = resolve_hidden_layers(config)
 
-    # Build model with the same architecture used during training
     model = NeuralNetwork(
         input_dim=784,
         hidden_layers=hidden_layers,
@@ -56,10 +46,23 @@ def main():
         weight_decay=config["weight_decay"],
     )
 
-    # Load saved weights into the model
-    weights = np.load(args.model_path, allow_pickle=True).item()
+    weights = np.load(model_path, allow_pickle=True).item()
     model.set_weights(weights)
+    return model
 
+
+def main():
+    args = parse_arguments()
+    X_train, y_train, X_val, y_val, X_test, y_test = load_and_preprocess_data(args.dataset)
+
+    if args.split == "train":
+        X, y = X_train, y_train
+    elif args.split == "val":
+        X, y = X_val, y_val
+    else:
+        X, y = X_test, y_test
+
+    model = load_model(args.model_path, args.config_path)
     preds = model.predict(X)
 
     accuracy = accuracy_score(y, preds)
