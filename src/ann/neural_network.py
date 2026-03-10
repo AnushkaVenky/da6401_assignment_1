@@ -1,57 +1,99 @@
-"""
-Main Neural Network Model class
-Handles forward and backward propagation loops
-"""
 import numpy as np
+from ann.activations import softmax
+from ann.neural_layer import DenseLayer
+from ann.objective_functions import cross_entropy_loss, cross_entropy_grad
+from ann.objective_functions import mse_loss, mse_grad
+from ann.optimizers import Optimizer
+
 
 class NeuralNetwork:
-    """
-    Main model class that orchestrates the neural network training and inference.
-    """
+    def __init__(
+        self,
+        input_dim,
+        hidden_layers,
+        output_dim,
+        activation="relu",
+        loss="cross_entropy",
+        weight_init="xavier",
+        learning_rate=0.001,
+        optimizer_name="adam",
+        weight_decay=0.0,
+    ):
+        self.layers = []
+        dims = [input_dim] + hidden_layers + [output_dim]
 
-    def __init__(self, cli_args):
-        pass
+        for i in range(len(dims) - 1):
+            act = activation if i < len(dims) - 2 else None
+            layer = DenseLayer(dims[i], dims[i + 1], activation=act, weight_init=weight_init)
+            self.layers.append(layer)
+
+        self.loss = loss
+        self.weight_decay = weight_decay
+        self.optimizer = Optimizer(name=optimizer_name, learning_rate=learning_rate)
+        self.optimizer.setup(self.layers)
+        self.grad_W = None
+        self.grad_b = None
+        self.last_hidden_output = None
 
     def forward(self, X):
-        """
-        Forward propagation through all layers.
-        Returns logits (no softmax applied)
-        X is shape (b, D_in) and output is shape (b, D_out).
-        b is batch size, D_in is input dimension, D_out is output dimension.
-        """
-        pass
+        out = X
+        for i, layer in enumerate(self.layers):
+            out = layer.forward(out)
+            if i == 0:
+                self.last_hidden_output = out.copy()
+        return out
+
+    def compute_loss(self, logits, y_true):
+        if self.loss == "cross_entropy":
+            return cross_entropy_loss(logits, y_true)
+        return mse_loss(logits, y_true)
 
     def backward(self, y_true, y_pred):
-        """
-        Backward propagation to compute gradients.
-        Returns two numpy arrays: grad_Ws, grad_bs.
-        - `grad_Ws[0]` is gradient for the last (output) layer weights,
-          `grad_bs[0]` is gradient for the last layer biases, and so on.
-        """
+        if self.loss == "cross_entropy":
+            grad = cross_entropy_grad(y_pred, y_true)
+        else:
+            grad = mse_grad(y_pred, y_true)
+
         grad_W_list = []
         grad_b_list = []
 
-        # Backprop through layers in reverse; collect grads so that index 0 = last layer
+        grad = self.layers[-1].backward_linear(grad, self.weight_decay)
+        grad_W_list.append(self.layers[-1].grad_W.copy())
+        grad_b_list.append(self.layers[-1].grad_b.copy())
 
-        # create explicit object arrays to avoid numpy trying to broadcast shapes
-        self.grad_W = np.empty(len(grad_W_list), dtype=object)
-        self.grad_b = np.empty(len(grad_b_list), dtype=object)
-        for i, (gw, gb) in enumerate(zip(grad_W_list, grad_b_list)):
-            self.grad_W[i] = gw
-            self.grad_b[i] = gb
+        for layer in reversed(self.layers[:-1]):
+            grad = layer.backward(grad, self.weight_decay)
+            grad_W_list.append(layer.grad_W.copy())
+            grad_b_list.append(layer.grad_b.copy())
 
-        print("Shape of grad_Ws:", self.grad_W.shape, self.grad_W[1].shape)
-        print("Shape of grad_bs:", self.grad_b.shape, self.grad_b[1].shape)
+        self.grad_W = grad_W_list
+        self.grad_b = grad_b_list
         return self.grad_W, self.grad_b
 
     def update_weights(self):
-        pass
+        self.optimizer.step(self.layers)
 
-    def train(self, X_train, y_train, epochs=1, batch_size=32):
-        pass
+    def train_batch(self, X, y):
+        logits = self.forward(X)
+        loss = self.compute_loss(logits, y)
+        self.backward(y, logits)
+        self.update_weights()
+        return loss
+
+    def predict_proba(self, X):
+        logits = self.forward(X)
+        return softmax(logits)
+
+    def predict(self, X):
+        probs = self.predict_proba(X)
+        return np.argmax(probs, axis=1)
 
     def evaluate(self, X, y):
-        pass
+        logits = self.forward(X)
+        loss = self.compute_loss(logits, y)
+        preds = np.argmax(softmax(logits), axis=1)
+        accuracy = np.mean(preds == y)
+        return loss, accuracy, preds
 
     def get_weights(self):
         d = {}
@@ -68,4 +110,3 @@ class NeuralNetwork:
                 layer.W = weight_dict[w_key].copy()
             if b_key in weight_dict:
                 layer.b = weight_dict[b_key].copy()
-
