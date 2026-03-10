@@ -14,8 +14,6 @@ def parse_arguments():
     parser.add_argument("--dataset", type=str, default="mnist", choices=["mnist", "fashion_mnist"])
     parser.add_argument("--model_path", type=str, default="src/best_model.npy")
     parser.add_argument("--config_path", type=str, default="src/best_config.json")
-    # parser.add_argument("--model_path", type=str, required=True)
-    # parser.add_argument("--config_path", type=str, required= True)
     parser.add_argument("--split", type=str, default="test", choices=["train", "val", "test"])
     parser.add_argument("--save_cm_path", type=str, default="")
     parser.add_argument("--save_failures_path", type=str, default="")
@@ -44,6 +42,8 @@ def main():
         config = json.load(f)
 
     hidden_layers = resolve_hidden_layers(config)
+
+    # Build model with the same architecture used during training
     model = NeuralNetwork(
         input_dim=784,
         hidden_layers=hidden_layers,
@@ -56,8 +56,10 @@ def main():
         weight_decay=config["weight_decay"],
     )
 
+    # Load saved weights into the model
     weights = np.load(args.model_path, allow_pickle=True).item()
     model.set_weights(weights)
+
     preds = model.predict(X)
 
     accuracy = accuracy_score(y, preds)
