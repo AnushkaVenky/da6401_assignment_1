@@ -23,10 +23,8 @@ def parse_arguments():
     parser.add_argument("-wi", "--weight_init", type=str, default="xavier", choices=["random", "xavier", "zeros"])
     parser.add_argument("-wd", "--weight_decay", type=float, default=0.0)
     parser.add_argument("--wandb_project", type=str, default="da6401_assignment_1")
-    parser.add_argument("--model_save_path", type=str, default="src/trial_model.npy")
-    parser.add_argument("--config_save_path", type=str, default="src/trial_config.json")
-    # parser.add_argument("--model_save_path", type=str, required = True)
-    # parser.add_argument("--config_save_path", type=str, required= True)
+    parser.add_argument("--model_save_path", type=str, default="src/best_model.npy")
+    parser.add_argument("--config_save_path", type=str, default="src/best_config.json")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--log_activations", action="store_true")
     return parser.parse_args()
@@ -74,11 +72,10 @@ def main():
     model.optimizer.name = config.optimizer
     model.optimizer.learning_rate = config.learning_rate
 
-    os.makedirs(os.path.dirname(config.model_save_path) or ".", exist_ok=True)
-    os.makedirs(os.path.dirname(config.config_save_path) or ".", exist_ok=True)
-    
     run_model_path = config.model_save_path
     run_config_path = config.config_save_path
+    os.makedirs(os.path.dirname(run_model_path) or ".", exist_ok=True)
+    os.makedirs(os.path.dirname(run_config_path) or ".", exist_ok=True)
 
     best_val_accuracy = -1.0
     best_epoch = 0
