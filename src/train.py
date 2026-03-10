@@ -62,9 +62,11 @@ def main():
     model.optimizer.name = config.optimizer
     model.optimizer.learning_rate = config.learning_rate
 
-    os.makedirs("models", exist_ok=True)
-    run_model_path = os.path.join("models", f"{wandb.run.id}_best_model.npy")
-    run_config_path = os.path.join("models", f"{wandb.run.id}_best_config.json")
+    os.makedirs(os.path.dirname(config.model_save_path) or ".", exist_ok=True)
+    os.makedirs(os.path.dirname(config.config_save_path) or ".", exist_ok=True)
+    
+    run_model_path = config.model_save_path
+    run_config_path = config.config_save_path
 
     best_val_accuracy = -1.0
     best_epoch = 0
