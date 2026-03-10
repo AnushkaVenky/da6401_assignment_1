@@ -9,9 +9,10 @@ from ann.optimizers import Optimizer
 class NeuralNetwork:
     def __init__(
         self,
-        input_dim,
-        hidden_layers,
-        output_dim,
+        cli_args=None,
+        input_dim=None,
+        hidden_layers=None,
+        output_dim=None,
         activation="relu",
         loss="cross_entropy",
         weight_init="xavier",
@@ -19,6 +20,35 @@ class NeuralNetwork:
         optimizer_name="adam",
         weight_decay=0.0,
     ):
+        
+        if cli_args is not None:
+            input_dim = 784
+            output_dim = 10
+
+            num_layers = getattr(cli_args, "num_layers", getattr(cli_args, "hidden_layers", 1))
+            hidden_size = getattr(cli_args, "hidden_size", getattr(cli_args, "num_neurons", [64]))
+
+            if isinstance(hidden_size, int):
+                hidden_layers = [hidden_size] * num_layers
+            else:
+                hidden_layers = list(hidden_size)
+                if len(hidden_layers) == 1:
+                    hidden_layers = hidden_layers * num_layers
+
+            activation = getattr(cli_args, "activation", activation)
+            loss = getattr(cli_args, "loss", loss)
+            weight_init = getattr(cli_args, "weight_init", weight_init)
+            learning_rate = getattr(cli_args, "learning_rate", learning_rate)
+            optimizer_name = getattr(cli_args, "optimizer", optimizer_name)
+            weight_decay = getattr(cli_args, "weight_decay", weight_decay)
+
+        if input_dim is None:
+            input_dim = 784
+        if output_dim is None:
+            output_dim = 10
+        if hidden_layers is None:
+            hidden_layers = [64]
+
         self.layers = []
         dims = [input_dim] + hidden_layers + [output_dim]
 
