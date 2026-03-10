@@ -60,7 +60,17 @@ def main():
     X_train, y_train, X_val, y_val, X_test, y_test = load_and_preprocess_data(config.dataset)
     hidden_layers = resolve_hidden_layers(config.hidden_size, config.num_layers)
 
-    model = NeuralNetwork(config)
+    model = NeuralNetwork(
+        input_dim=784,
+        hidden_layers=hidden_layers,
+        output_dim=10,
+        activation=config.activation,
+        loss=config.loss,
+        weight_init=config.weight_init,
+        learning_rate=config.learning_rate,
+        optimizer_name=config.optimizer,
+        weight_decay=config.weight_decay,
+    )
     model.optimizer.name = config.optimizer
     model.optimizer.learning_rate = config.learning_rate
 
