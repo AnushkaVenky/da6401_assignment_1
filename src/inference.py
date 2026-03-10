@@ -12,8 +12,8 @@ from utils.data_loader import load_and_preprocess_data
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Run inference with a saved model")
     parser.add_argument("--dataset", type=str, default="mnist", choices=["mnist", "fashion_mnist"])
-    parser.add_argument("--model_path", type=str, default="models/trial_model.npy")
-    parser.add_argument("--config_path", type=str, default="models/trial_config.json")
+    parser.add_argument("--model_path", type=str, default="src/best_model.npy")
+    parser.add_argument("--config_path", type=str, default="src/best_config.json")
     parser.add_argument("--split", type=str, default="test", choices=["train", "val", "test"])
     parser.add_argument("--save_cm_path", type=str, default="")
     parser.add_argument("--save_failures_path", type=str, default="")
