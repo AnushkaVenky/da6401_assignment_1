@@ -42,17 +42,7 @@ def main():
         config = json.load(f)
 
     hidden_layers = resolve_hidden_layers(config)
-    model = NeuralNetwork(
-        input_dim=784,
-        hidden_layers=hidden_layers,
-        output_dim=10,
-        activation=config["activation"],
-        loss=config["loss"],
-        weight_init=config["weight_init"],
-        learning_rate=config["learning_rate"],
-        optimizer_name=config["optimizer"],
-        weight_decay=config["weight_decay"],
-    )
+    model = load_model(args.model_path, args.config_path)
 
     weights = np.load(args.model_path, allow_pickle=True).item()
     model.set_weights(weights)
